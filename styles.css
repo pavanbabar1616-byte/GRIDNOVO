@@ -1,3 +1,12 @@
+/* Add this at the top of your styles.css */
+*, *::before, *::after {
+    transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+}
+
+/* Disable transitions during theme switching for performance */
+.theme-transitioning * {
+    transition: none !important;
+}
 :root {
     --primary-color: #2c3e50;
     --secondary-color: #3498db;
@@ -9,6 +18,8 @@
     --nav-bg: #2c3e50;
     --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     --border-radius: 8px;
+    --input-bg: #ffffff;
+    --border-color: #ddd;
 }
 
 .dark-theme {
@@ -21,6 +32,16 @@
     --header-bg: #16213e;
     --nav-bg: #0f3460;
     --shadow: 0 4px 6px rgba(0, 0, 0, 0.4);
+    --input-bg: #1e2a4a;
+    --border-color: #2d3b5e;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    line-height: 1.6;
+    transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 * {
@@ -30,12 +51,7 @@
     transition: background-color 0.3s, color 0.3s;
 }
 
-body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background-color: var(--bg-color);
-    color: var(--text-color);
-    line-height: 1.6;
-}
+
 
 .parent {
     display: grid;
@@ -1390,4 +1406,70 @@ select, .theme-toggle {
         min-height: 80px;
         max-height: 100px;
     }
+}
+/* Dark theme specific styles */
+.dark-theme select,
+.dark-theme input,
+.dark-theme textarea {
+    background-color: var(--input-bg);
+    color: var(--text-color);
+    border-color: var(--border-color);
+}
+
+.dark-theme .alerts-table th,
+.dark-theme .alerts-table td {
+    border-bottom-color: var(--border-color);
+}
+
+.dark-theme .alerts-table th {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.dark-theme .page-header {
+    border-bottom-color: var(--border-color);
+}
+
+.dark-theme .system-info-tabs {
+    border-bottom-color: var(--border-color);
+}
+
+.dark-theme .chat-messages {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.dark-theme .input-group input,
+.dark-theme .input-group select,
+.dark-theme .field-form input,
+.dark-theme .field-form select {
+    background: var(--input-bg);
+    color: var(--text-color);
+    border-color: var(--border-color);
+}
+
+.dark-theme .checkbox-label {
+    color: var(--text-color);
+}
+
+.dark-theme .contact-card small,
+.dark-theme .metric-label {
+    color: #b0b0b0;
+}
+/* Smooth transitions for all theme-affected elements */
+.theme-transitioning * {
+    transition: none !important;
+}
+
+/* Ensure proper transitions for specific elements */
+select, input, textarea, button, .metric-card, .weather-card, .graph-container {
+    transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+}
+
+/* Chart container background for dark theme */
+.dark-theme .graph-container {
+    background: var(--card-bg);
+}
+
+.dark-theme canvas {
+    background: var(--card-bg);
+    border-radius: var(--border-radius);
 }

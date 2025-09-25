@@ -1,9 +1,15 @@
+
 // ThingSpeak Configuration
 const THINGSPEAK_CONFIG = {
     READ_API_KEY: '3HDWQQTF7799XGAX',
     CHANNEL_ID: '3074276',
     BASE_URL: 'https://api.thingspeak.com/channels',
-    UPDATE_INTERVAL: 30000, // 30 seconds
+    UPDATE_INTERVAL: 30000, // 30 seconds (keep this for dashboard updates)
+    MAX_RESULTS: 200, // Get more data points for better graphs
+    
+    // NEW: Add parameters for 10-minute interval averaging
+    AVERAGE_MINUTES: 10, // Average data over 10-minute intervals
+    
     FIELD_MAPPING: {
         temperature: 'field1',
         humidity: 'field2', 
@@ -211,15 +217,17 @@ let updateInterval;
 
 // ThingSpeak data storage
 let thingSpeakData = {
+    rawTimestamps: [],
     temperature: [],
     humidity: [],
     current: [],
     voltage: [],
-    energyGenerated: 0,
-    energyConsumed: 0,
-    batteryPercent: 0,
+    energyGenerated: [],
+    energyConsumed: [],
+    batteryPercent: [],
     lastUpdate: null,
     connectionStatus: false,
+    channelInfo: null,
     alerts: [],
     weatherData: {
         today: { temp: 32, humidity: 65, rain: 10, wind: 12, icon: 'fa-sun' },
@@ -302,7 +310,7 @@ document.addEventListener('DOMContentLoaded', function() {
     try {
         initializeEventListeners();
         initializeCharts();
-        initializeThingSpeak();
+       initializeThingSpeakWith10MinInterval();
         initializeLanguage();
         initializeSystemInfoSections();
         
@@ -437,30 +445,40 @@ function initializeLanguage() {
 // =============================================================================
 // THINGSPEAK INTEGRATION
 // =============================================================================
-
-function initializeThingSpeak() {
-    console.log('📡 Initializing ThingSpeak connection...');
+// Initialize ThingSpeak with enhanced error handling
+async function initializeThingSpeakWith10MinInterval() {
+    console.log('📡 Initializing ThingSpeak connection with 10-minute intervals...');
     
     // Check if API credentials are configured
     if (!THINGSPEAK_CONFIG.READ_API_KEY || THINGSPEAK_CONFIG.READ_API_KEY === 'YOUR_READ_API_KEY') {
-        console.warn('⚠️  ThingSpeak API key not configured. Using demo data.');
+        console.warn('⚠️ ThingSpeak API key not configured. Using demo data.');
         generateDemoData();
         startDemoDataUpdates();
         return;
     }
     
-    // Start real ThingSpeak integration
-    fetchThingSpeakData();
-    updateInterval = setInterval(fetchThingSpeakData, THINGSPEAK_CONFIG.UPDATE_INTERVAL);
-    
-    console.log(`🔄 ThingSpeak updates started (${THINGSPEAK_CONFIG.UPDATE_INTERVAL/1000}s interval)`);
+    try {
+        // Fetch channel info first
+        await fetchChannelInfo();
+        
+        // Fetch initial data with 10-minute intervals
+        await fetchThingSpeakDataWith10MinInterval();
+        
+        // Start real-time updates (still every 30 seconds for dashboard)
+        updateInterval = setInterval(fetchThingSpeakDataWith10MinInterval, THINGSPEAK_CONFIG.UPDATE_INTERVAL);
+        
+        console.log(`🔄 ThingSpeak updates started (${THINGSPEAK_CONFIG.UPDATE_INTERVAL/1000}s interval) with 10-minute data averaging`);
+        
+    } catch (error) {
+        console.error('❌ ThingSpeak initialization failed:', error);
+        generateDemoData();
+        startDemoDataUpdates();
+    }
 }
 
-async function fetchThingSpeakData() {
+async function fetchChannelInfo() {
     try {
-        console.log('📥 Fetching ThingSpeak data...');
-        
-        const url = `${THINGSPEAK_CONFIG.BASE_URL}/${THINGSPEAK_CONFIG.CHANNEL_ID}/feeds.json?api_key=${THINGSPEAK_CONFIG.READ_API_KEY}&results=100`;
+        const url = `${THINGSPEAK_CONFIG.BASE_URL}/${THINGSPEAK_CONFIG.CHANNEL_ID}.json?api_key=${THINGSPEAK_CONFIG.READ_API_KEY}`;
         
         const response = await fetch(url);
         if (!response.ok) {
@@ -468,51 +486,210 @@ async function fetchThingSpeakData() {
         }
         
         const data = await response.json();
-        processThingSpeakData(data);
+        thingSpeakData.channelInfo = data;
         
-        console.log('✅ ThingSpeak data updated successfully');
+        console.log('📋 Channel Info:', {
+            name: data.name,
+            description: data.description,
+            fields: {
+                field1: data.field1 || 'Temperature',
+                field2: data.field2 || 'Humidity', 
+                field3: data.field3 || 'Current',
+                field4: data.field4 || 'Voltage'
+            }
+        });
+        
+    } catch (error) {
+        console.warn('⚠️ Could not fetch channel info:', error.message);
+    }
+}
+async function fetchThingSpeakDataWith10MinInterval() {
+    try {
+        console.log('📥 Fetching ThingSpeak data with 10-minute intervals...');
+        
+        // Method 1: Use ThingSpeak's built-in averaging (if available)
+        // Add 'average=10' parameter to get 10-minute averages
+        const url = `${THINGSPEAK_CONFIG.BASE_URL}/${THINGSPEAK_CONFIG.CHANNEL_ID}/feeds.json?api_key=${THINGSPEAK_CONFIG.READ_API_KEY}&results=${THINGSPEAK_CONFIG.MAX_RESULTS}&average=10`;
+        
+        const response = await fetch(url);
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
+        const data = await response.json();
+        processThingSpeakDataWith10MinInterval(data);
+        
+        console.log('✅ ThingSpeak data updated successfully with 10-minute intervals');
         
     } catch (error) {
         console.error('❌ ThingSpeak fetch failed:', error);
-        thingSpeakData.connectionStatus = false;
-        updateConnectionStatus();
         
-        // Fallback to demo data if real API fails
-        if (thingSpeakData.temperature.length === 0) {
-            generateDemoData();
+        // Fallback: Try without averaging parameter and do client-side averaging
+        try {
+            await fetchAndAverageClientSide();
+        } catch (fallbackError) {
+            console.error('❌ Fallback method also failed:', fallbackError);
+            thingSpeakData.connectionStatus = false;
+            updateConnectionStatus();
         }
     }
 }
-
-function processThingSpeakData(data) {
+async function fetchAndAverageClientSide() {
+    console.log('📊 Performing client-side 10-minute averaging...');
+    
+    // Get more data points for averaging (e.g., last 1000 entries)
+    const url = `${THINGSPEAK_CONFIG.BASE_URL}/${THINGSPEAK_CONFIG.CHANNEL_ID}/feeds.json?api_key=${THINGSPEAK_CONFIG.READ_API_KEY}&results=1000`;
+    
+    const response = await fetch(url);
+    if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+    
+    const data = await response.json();
+    const averagedData = averageDataBy10Minutes(data);
+    processThingSpeakDataWith10MinInterval(averagedData);
+}
+function averageDataBy10Minutes(data) {
     if (!data.feeds || data.feeds.length === 0) {
-        console.warn('⚠️  No ThingSpeak feeds found');
+        return data;
+    }
+    
+    const feeds = data.feeds;
+    const averagedFeeds = [];
+    const intervalMs = 10 * 60 * 1000; // 10 minutes in milliseconds
+    
+    // Group feeds by 10-minute intervals
+    const groups = {};
+    
+    feeds.forEach(feed => {
+        const timestamp = new Date(feed.created_at);
+        // Round down to nearest 10-minute interval
+        const intervalStart = new Date(Math.floor(timestamp.getTime() / intervalMs) * intervalMs);
+        const intervalKey = intervalStart.getTime();
+        
+        if (!groups[intervalKey]) {
+            groups[intervalKey] = [];
+        }
+        groups[intervalKey].push(feed);
+    });
+    
+    // Calculate averages for each interval
+    Object.keys(groups).forEach(intervalKey => {
+        const groupFeeds = groups[intervalKey];
+        const intervalStart = new Date(parseInt(intervalKey));
+        
+        // Calculate average values for each field
+        const averagedFeed = {
+            created_at: intervalStart.toISOString(),
+            entry_id: groupFeeds[0].entry_id, // Use first entry_id in the group
+        };
+        
+        // Average each field
+        Object.values(THINGSPEAK_CONFIG.FIELD_MAPPING).forEach(fieldName => {
+            const validValues = groupFeeds
+                .map(feed => parseFloat(feed[fieldName]))
+                .filter(val => !isNaN(val));
+            
+            if (validValues.length > 0) {
+                const average = validValues.reduce((sum, val) => sum + val, 0) / validValues.length;
+                averagedFeed[fieldName] = average.toFixed(2);
+            } else {
+                averagedFeed[fieldName] = null;
+            }
+        });
+        
+        averagedFeeds.push(averagedFeed);
+    });
+    // Sort by timestamp
+    averagedFeeds.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+    
+    console.log(`📈 Averaged ${feeds.length} data points into ${averagedFeeds.length} 10-minute intervals`);
+    
+    return {
+        ...data,
+        feeds: averagedFeeds
+    };
+}
+function processThingSpeakDataWith10MinInterval(data) {
+    if (!data.feeds || data.feeds.length === 0) {
+        console.warn('⚠️ No ThingSpeak feeds found');
         generateDemoData();
         return;
     }
     
     try {
-        const feeds = data.feeds.slice(-24); // Last 24 data points
+        const feeds = data.feeds;
         const mapping = THINGSPEAK_CONFIG.FIELD_MAPPING;
         
-        // Process time-series data
-        thingSpeakData.temperature = feeds.map(feed => parseFloat(feed[mapping.temperature]) || 0);
-        thingSpeakData.humidity = feeds.map(feed => parseFloat(feed[mapping.humidity]) || 0);
-        thingSpeakData.current = feeds.map(feed => parseFloat(feed[mapping.current]) || 0);
-        thingSpeakData.voltage = feeds.map(feed => parseFloat(feed[mapping.voltage]) || 0);
+        console.log(`📊 Processing ${feeds.length} averaged data points (10-min intervals)`);
         
-        // Get latest values
+        // Store raw timestamps as Date objects for native x-axis
+        thingSpeakData.rawTimestamps = feeds.map(feed => new Date(feed.created_at));
+        
+        // Process field data, preserving null values for gaps
+        thingSpeakData.temperature = feeds.map(feed => {
+            const val = parseFloat(feed[mapping.temperature]);
+            return isNaN(val) ? null : val;
+        });
+        
+        thingSpeakData.humidity = feeds.map(feed => {
+            const val = parseFloat(feed[mapping.humidity]);
+            return isNaN(val) ? null : val;
+        });
+        
+        thingSpeakData.current = feeds.map(feed => {
+            const val = parseFloat(feed[mapping.current]);
+            return isNaN(val) ? null : val;
+        });
+        
+        thingSpeakData.voltage = feeds.map(feed => {
+            const val = parseFloat(feed[mapping.voltage]);
+            return isNaN(val) ? null : val;
+        });
+        
+        thingSpeakData.energyGenerated = feeds.map(feed => {
+            const val = parseFloat(feed[mapping.energyGenerated]);
+            return isNaN(val) ? null : val;
+        });
+        
+        thingSpeakData.energyConsumed = feeds.map(feed => {
+            const val = parseFloat(feed[mapping.energyConsumed]);
+            return isNaN(val) ? null : val;
+        });
+        
+        thingSpeakData.batteryPercent = feeds.map(feed => {
+            const val = parseFloat(feed[mapping.batteryPercent]);
+            return isNaN(val) ? null : val;
+        });
+        
+        // Get latest non-null values for dashboard cards
         const latest = feeds[feeds.length - 1];
-        thingSpeakData.energyGenerated = parseFloat(latest[mapping.energyGenerated]) || 0;
-        thingSpeakData.energyConsumed = parseFloat(latest[mapping.energyConsumed]) || 0;
-        thingSpeakData.batteryPercent = parseFloat(latest[mapping.batteryPercent]) || 0;
         thingSpeakData.lastUpdate = new Date(latest.created_at);
         thingSpeakData.connectionStatus = true;
         
-        // Check for alerts
+        // Log the time interval between data points
+        if (thingSpeakData.rawTimestamps.length > 1) {
+            const timeDiff = thingSpeakData.rawTimestamps[1].getTime() - thingSpeakData.rawTimestamps[0].getTime();
+            const intervalMinutes = Math.round(timeDiff / (1000 * 60));
+            console.log(`⏱️ Data interval: ~${intervalMinutes} minutes between points`);
+        }
+        
+        // Log data ranges for debugging
+        console.log('📈 Data Ranges (10-min averages):', {
+            timespan: {
+                start: thingSpeakData.rawTimestamps[0]?.toISOString(),
+                end: thingSpeakData.rawTimestamps[thingSpeakData.rawTimestamps.length - 1]?.toISOString()
+            },
+            temperature: getDataRange(thingSpeakData.temperature),
+            humidity: getDataRange(thingSpeakData.humidity),
+            current: getDataRange(thingSpeakData.current),
+            voltage: getDataRange(thingSpeakData.voltage)
+        });
+        
+        // Check for alerts based on thresholds
         checkAlerts();
         
-        // Update dashboard
+        // Update dashboard and charts
         updateDashboard();
         updateConnectionStatus();
         
@@ -520,6 +697,20 @@ function processThingSpeakData(data) {
         console.error('❌ Error processing ThingSpeak data:', error);
         generateDemoData();
     }
+}
+
+
+// Helper function to get data range (min/max) ignoring null values
+function getDataRange(dataArray) {
+    const validData = dataArray.filter(val => val !== null && !isNaN(val));
+    if (validData.length === 0) return { min: null, max: null, count: 0 };
+    
+    return {
+        min: Math.min(...validData),
+        max: Math.max(...validData),
+        count: validData.length,
+        nullCount: dataArray.length - validData.length
+    };
 }
 
 function generateDemoData() {
@@ -580,38 +771,98 @@ function startDemoDataUpdates() {
 // DASHBOARD UPDATE FUNCTIONS
 // =============================================================================
 
-function updateDashboard() {
-    updateMetricCards();
-    updateWeatherCards();
-    updateTimestamps();
-    updateCharts();
+function initializeTheme() {
+    const savedTheme = localStorage.getItem('theme');
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    
+    if (savedTheme === 'dark' || (!savedTheme && prefersDark)) {
+        document.body.classList.add('dark-theme');
+        const themeToggle = document.querySelector('.theme-toggle i');
+        if (themeToggle) {
+            themeToggle.classList.remove('fa-moon');
+            themeToggle.classList.add('fa-sun');
+        }
+    }
+    
+    console.log('🎨 Theme initialized:', document.body.classList.contains('dark-theme') ? 'Dark' : 'Light');
 }
-
-function updateMetricCards() {
-    const elements = {
-        'energy-generated': thingSpeakData.energyGenerated.toFixed(1) + ' kWh',
-        'energy-consumed': thingSpeakData.energyConsumed.toFixed(1) + ' kWh',
-        'battery-percent': thingSpeakData.batteryPercent + '%'
+function updateDashboardWithNativeData() {
+    // Get latest non-null values for each metric
+    const getLatestValue = (dataArray) => {
+        for (let i = dataArray.length - 1; i >= 0; i--) {
+            if (dataArray[i] !== null && !isNaN(dataArray[i])) {
+                return dataArray[i];
+            }
+        }
+        return null;
     };
     
-    // Update latest sensor values
-    if (thingSpeakData.current.length > 0) {
-        elements.current = thingSpeakData.current[thingSpeakData.current.length - 1].toFixed(1) + ' A';
-    }
+    const latestTemp = getLatestValue(thingSpeakData.temperature);
+    const latestEnergy = getLatestValue(thingSpeakData.energyGenerated);
+    const latestCurrent = getLatestValue(thingSpeakData.current);
+    const latestVoltage = getLatestValue(thingSpeakData.voltage);
+    const latestBattery = getLatestValue(thingSpeakData.batteryPercent);
+    const latestConsumed = getLatestValue(thingSpeakData.energyConsumed);
     
-    if (thingSpeakData.voltage.length > 0) {
-        elements.voltage = Math.round(thingSpeakData.voltage[thingSpeakData.voltage.length - 1]) + ' V';
-    }
+    // Update DOM elements with latest values
+    const updates = {};
     
-    if (thingSpeakData.temperature.length > 0) {
-        elements.temperature = Math.round(thingSpeakData.temperature[thingSpeakData.temperature.length - 1]) + '°C';
-    }
+    if (latestTemp !== null) updates.temperature = Math.round(latestTemp) + '°C';
+    if (latestEnergy !== null) updates['energy-generated'] = latestEnergy.toFixed(1) + ' kWh';
+    if (latestCurrent !== null) updates.current = latestCurrent.toFixed(1) + ' A';
+    if (latestVoltage !== null) updates.voltage = Math.round(latestVoltage) + ' V';
+    if (latestBattery !== null) updates['battery-percent'] = Math.round(latestBattery) + '%';
+    if (latestConsumed !== null) updates['energy-consumed'] = latestConsumed.toFixed(1) + ' kWh';
     
-    // Update DOM elements
-    Object.entries(elements).forEach(([id, value]) => {
+    // Apply updates to DOM
+    Object.entries(updates).forEach(([id, value]) => {
         const element = document.getElementById(id);
         if (element) element.textContent = value;
     });
+    
+    // Update timestamps
+    updateTimestamps();
+    updateNativeCharts();
+}
+
+
+function updateDashboardWithNativeData() {
+    // Get latest non-null values for each metric
+    const getLatestValue = (dataArray) => {
+        for (let i = dataArray.length - 1; i >= 0; i--) {
+            if (dataArray[i] !== null && !isNaN(dataArray[i])) {
+                return dataArray[i];
+            }
+        }
+        return null;
+    };
+    
+    const latestTemp = getLatestValue(thingSpeakData.temperature);
+    const latestEnergy = getLatestValue(thingSpeakData.energyGenerated);
+    const latestCurrent = getLatestValue(thingSpeakData.current);
+    const latestVoltage = getLatestValue(thingSpeakData.voltage);
+    const latestBattery = getLatestValue(thingSpeakData.batteryPercent);
+    const latestConsumed = getLatestValue(thingSpeakData.energyConsumed);
+    
+    // Update DOM elements with latest values
+    const updates = {};
+    
+    if (latestTemp !== null) updates.temperature = Math.round(latestTemp) + '°C';
+    if (latestEnergy !== null) updates['energy-generated'] = latestEnergy.toFixed(1) + ' kWh';
+    if (latestCurrent !== null) updates.current = latestCurrent.toFixed(1) + ' A';
+    if (latestVoltage !== null) updates.voltage = Math.round(latestVoltage) + ' V';
+    if (latestBattery !== null) updates['battery-percent'] = Math.round(latestBattery) + '%';
+    if (latestConsumed !== null) updates['energy-consumed'] = latestConsumed.toFixed(1) + ' kWh';
+    
+    // Apply updates to DOM
+    Object.entries(updates).forEach(([id, value]) => {
+        const element = document.getElementById(id);
+        if (element) element.textContent = value;
+    });
+    
+    // Update timestamps
+    updateTimestamps();
+    updateNativeCharts();
 }
 
 function updateWeatherCards() {
@@ -733,116 +984,150 @@ function updateAlertsTable() {
 // CHART FUNCTIONS
 // =============================================================================
 
-function initializeCharts() {
-    console.log('📊 Initializing charts...');
+function initializeChartsWithNativeAxes() {
+    console.log('📊 Initializing charts with native ThingSpeak axes...');
     
     try {
-        initializeTemperatureChart();
-        initializeHumidityChart();
-        initializeCurrentChart();
-        initializeVoltageChart();
+        if (document.getElementById('temp-chart')) {
+            initializeNativeTemperatureChart();
+        }
+        if (document.getElementById('humidity-chart')) {
+            initializeNativeHumidityChart();
+        }
+        if (document.getElementById('current-chart')) {
+            initializeNativeCurrentChart();
+        }
+        if (document.getElementById('voltage-chart')) {
+            initializeNativeVoltageChart();
+        }
         
-        console.log('✅ Charts initialized successfully');
+        console.log('✅ Native charts initialized successfully');
     } catch (error) {
-        console.error('❌ Chart initialization failed:', error);
+        console.error('❌ Native chart initialization failed:', error);
     }
 }
 
-function initializeTemperatureChart() {
+function initializeNativeTemperatureChart() {
     const ctx = document.getElementById('temp-chart');
     if (!ctx) return;
+    
+    const fieldName = thingSpeakData.channelInfo?.field1 || 'Temperature';
     
     temperatureChart = new Chart(ctx.getContext('2d'), {
         type: 'line',
         data: {
-            labels: generateTimeLabels(),
             datasets: [{
-                label: 'Temperature (°C)',
-                data: thingSpeakData.temperature,
+                label: `${fieldName} (°C)`,
+                data: thingSpeakData.rawTimestamps.map((time, index) => ({
+                    x: time,
+                    y: thingSpeakData.temperature[index]
+                })),
                 borderColor: '#e74c3c',
                 backgroundColor: 'rgba(231, 76, 60, 0.1)',
-                tension: 0.4,
-                fill: true,
+                tension: 0.2,
+                fill: false,
                 pointBackgroundColor: '#e74c3c',
                 pointBorderColor: '#c0392b',
-                pointRadius: 3
+                pointRadius: 2,
+                pointHoverRadius: 6,
+                spanGaps: false // Don't connect across null values
             }]
         },
-        options: getChartOptions('Temperature (°C)')
+        options: getNativeChartOptions('Temperature (°C)', '°C')
     });
 }
 
-function initializeHumidityChart() {
+function initializeNativeHumidityChart() {
     const ctx = document.getElementById('humidity-chart');
     if (!ctx) return;
+    
+    const fieldName = thingSpeakData.channelInfo?.field2 || 'Humidity';
     
     humidityChart = new Chart(ctx.getContext('2d'), {
         type: 'line',
         data: {
-            labels: generateTimeLabels(),
             datasets: [{
-                label: 'Humidity (%)',
-                data: thingSpeakData.humidity,
+                label: `${fieldName} (%)`,
+                data: thingSpeakData.rawTimestamps.map((time, index) => ({
+                    x: time,
+                    y: thingSpeakData.humidity[index]
+                })),
                 borderColor: '#3498db',
                 backgroundColor: 'rgba(52, 152, 219, 0.1)',
-                tension: 0.4,
-                fill: true,
+                tension: 0.2,
+                fill: false,
                 pointBackgroundColor: '#3498db',
                 pointBorderColor: '#2980b9',
-                pointRadius: 3
+                pointRadius: 2,
+                pointHoverRadius: 6,
+                spanGaps: false
             }]
         },
-        options: getChartOptions('Humidity (%)')
+        options: getNativeChartOptions('Humidity (%)', '%')
     });
 }
 
-function initializeCurrentChart() {
+function initializeNativeCurrentChart() {
     const ctx = document.getElementById('current-chart');
     if (!ctx) return;
+    
+    const fieldName = thingSpeakData.channelInfo?.field3 || 'Current';
     
     currentChart = new Chart(ctx.getContext('2d'), {
         type: 'line',
         data: {
-            labels: generateTimeLabels(),
             datasets: [{
-                label: 'Current (A)',
-                data: thingSpeakData.current,
+                label: `${fieldName} (A)`,
+                data: thingSpeakData.rawTimestamps.map((time, index) => ({
+                    x: time,
+                    y: thingSpeakData.current[index]
+                })),
                 borderColor: '#f39c12',
                 backgroundColor: 'rgba(243, 156, 18, 0.1)',
-                tension: 0.4,
-                fill: true,
+                tension: 0.2,
+                fill: false,
                 pointBackgroundColor: '#f39c12',
                 pointBorderColor: '#e67e22',
-                pointRadius: 3
+                pointRadius: 2,
+                pointHoverRadius: 6,
+                spanGaps: false
             }]
         },
-        options: getChartOptions('Current (A)')
+        options: getNativeChartOptions('Current (A)', 'A')
     });
 }
 
-function initializeVoltageChart() {
+// Native voltage chart with ThingSpeak timestamps
+function initializeNativeVoltageChart() {
     const ctx = document.getElementById('voltage-chart');
     if (!ctx) return;
+    
+    const fieldName = thingSpeakData.channelInfo?.field4 || 'Voltage';
     
     voltageChart = new Chart(ctx.getContext('2d'), {
         type: 'line',
         data: {
-            labels: generateTimeLabels(),
             datasets: [{
-                label: 'Voltage (V)',
-                data: thingSpeakData.voltage,
+                label: `${fieldName} (V)`,
+                data: thingSpeakData.rawTimestamps.map((time, index) => ({
+                    x: time,
+                    y: thingSpeakData.voltage[index]
+                })),
                 borderColor: '#9b59b6',
                 backgroundColor: 'rgba(155, 89, 182, 0.1)',
-                tension: 0.4,
-                fill: true,
+                tension: 0.2,
+                fill: false,
                 pointBackgroundColor: '#9b59b6',
                 pointBorderColor: '#8e44ad',
-                pointRadius: 3
+                pointRadius: 2,
+                pointHoverRadius: 6,
+                spanGaps: false
             }]
         },
-        options: getChartOptions('Voltage (V)')
+        options: getNativeChartOptions('Voltage (V)', 'V')
     });
 }
+
 
 function generateTimeLabels() {
     return Array.from({length: 24}, (_, i) => {
@@ -851,7 +1136,7 @@ function generateTimeLabels() {
     });
 }
 
-function getChartOptions(yAxisLabel) {
+function getNativeChartOptions(yAxisLabel, unit) {
     return {
         responsive: true,
         maintainAspectRatio: false,
@@ -861,33 +1146,64 @@ function getChartOptions(yAxisLabel) {
                 position: 'top'
             },
             tooltip: {
-                mode: 'index',
+                mode: 'nearest',
                 intersect: false,
                 backgroundColor: 'rgba(0, 0, 0, 0.8)',
                 titleColor: '#fff',
-                bodyColor: '#fff'
+                bodyColor: '#fff',
+                callbacks: {
+                    title: function(context) {
+                        return new Date(context[0].parsed.x).toLocaleString();
+                    },
+                    label: function(context) {
+                        const value = context.parsed.y;
+                        return value !== null ? `${context.dataset.label}: ${value} ${unit}` : 'No data';
+                    }
+                }
+            },
+            zoom: {
+                pan: {
+                    enabled: true,
+                    mode: 'x'
+                },
+                zoom: {
+                    wheel: {
+                        enabled: true
+                    },
+                    pinch: {
+                        enabled: true
+                    },
+                    mode: 'x'
+                }
             }
         },
         scales: {
             x: {
-                display: true,
+                type: 'time',
+                time: {
+                    displayFormats: {
+                        minute: 'MMM dd HH:mm',
+                        hour: 'MMM dd HH:mm',
+                        day: 'MMM dd'
+                    }
+                },
                 title: {
                     display: true,
-                    text: 'Time (24h format)'
+                    text: 'Timestamp (ThingSpeak UTC)'
                 },
                 grid: {
                     color: 'rgba(0, 0, 0, 0.1)'
                 }
             },
             y: {
-                display: true,
                 title: {
                     display: true,
                     text: yAxisLabel
                 },
                 grid: {
                     color: 'rgba(0, 0, 0, 0.1)'
-                }
+                },
+                beginAtZero: false // Let ThingSpeak data determine the range
             }
         },
         interaction: {
@@ -898,17 +1214,39 @@ function getChartOptions(yAxisLabel) {
     };
 }
 
-function updateCharts() {
+
+function updateNativeCharts() {
     const charts = [
-        { chart: temperatureChart, data: thingSpeakData.temperature },
-        { chart: humidityChart, data: thingSpeakData.humidity },
-        { chart: currentChart, data: thingSpeakData.current },
-        { chart: voltageChart, data: thingSpeakData.voltage }
+        { 
+            chart: temperatureChart, 
+            data: thingSpeakData.temperature,
+            timestamps: thingSpeakData.rawTimestamps 
+        },
+        { 
+            chart: humidityChart, 
+            data: thingSpeakData.humidity,
+            timestamps: thingSpeakData.rawTimestamps 
+        },
+        { 
+            chart: currentChart, 
+            data: thingSpeakData.current,
+            timestamps: thingSpeakData.rawTimestamps 
+        },
+        { 
+            chart: voltageChart, 
+            data: thingSpeakData.voltage,
+            timestamps: thingSpeakData.rawTimestamps 
+        }
     ];
     
-    charts.forEach(({ chart, data }) => {
-        if (chart && data.length > 0) {
-            chart.data.datasets[0].data = data;
+    charts.forEach(({ chart, data, timestamps }) => {
+        if (chart && data.length > 0 && timestamps.length > 0) {
+            // Update data with native timestamp-value pairs
+            chart.data.datasets[0].data = timestamps.map((time, index) => ({
+                x: time,
+                y: data[index]
+            }));
+            
             chart.update('none'); // No animation for better performance
         }
     });
@@ -939,6 +1277,13 @@ function showPage(pageId) {
         if (parent) parent.style.display = 'grid';
     } else {
         if (parent) parent.style.display = 'none';
+    }
+    
+    // Initialize native charts when graphs page is loaded
+    if (pageId === 'graphs-page') {
+        setTimeout(() => {
+            initializeChartsWithNativeAxes();
+        }, 100); // Small delay to ensure DOM is ready
     }
 }
 
@@ -1168,40 +1513,39 @@ function exportReport(format) {
     }
 }
 
-function exportToCSV() {
+function exportThingSpeakNativeCSV() {
+    if (thingSpeakData.rawTimestamps.length === 0) {
+        alert('No ThingSpeak data available to export.');
+        return;
+    }
+    
     const headers = [
-        'Timestamp',
-        'Temperature (°C)',
-        'Humidity (%)',
-        'Current (A)',
-        'Voltage (V)',
-        'Energy Generated (kWh)',
-        'Energy Consumed (kWh)',
-        'Battery (%)'
+        'created_at',
+        'entry_id',
+        thingSpeakData.channelInfo?.field1 || 'field1',
+        thingSpeakData.channelInfo?.field2 || 'field2',
+        thingSpeakData.channelInfo?.field3 || 'field3',
+        thingSpeakData.channelInfo?.field4 || 'field4',
+        thingSpeakData.channelInfo?.field5 || 'field5',
+        thingSpeakData.channelInfo?.field6 || 'field6',
+        thingSpeakData.channelInfo?.field7 || 'field7'
     ];
     
     let csvContent = "data:text/csv;charset=utf-8,";
     csvContent += headers.join(',') + '\n';
     
-    // Generate data rows
-    const dataLength = Math.max(
-        thingSpeakData.temperature.length,
-        thingSpeakData.humidity.length,
-        thingSpeakData.current.length,
-        thingSpeakData.voltage.length
-    );
-    
-    for (let i = 0; i < dataLength; i++) {
-        const timestamp = new Date(Date.now() - (dataLength - i) * 15 * 60000).toISOString();
+    // Export data in ThingSpeak format
+    for (let i = 0; i < thingSpeakData.rawTimestamps.length; i++) {
         const row = [
-            timestamp,
-            thingSpeakData.temperature[i] || 0,
-            thingSpeakData.humidity[i] || 0,
-            thingSpeakData.current[i] || 0,
-            thingSpeakData.voltage[i] || 0,
-            thingSpeakData.energyGenerated.toFixed(2),
-            thingSpeakData.energyConsumed.toFixed(2),
-            thingSpeakData.batteryPercent
+            thingSpeakData.rawTimestamps[i].toISOString(),
+            i + 1,
+            thingSpeakData.temperature[i] || '',
+            thingSpeakData.humidity[i] || '',
+            thingSpeakData.current[i] || '',
+            thingSpeakData.voltage[i] || '',
+            thingSpeakData.energyGenerated[i] || '',
+            thingSpeakData.energyConsumed[i] || '',
+            thingSpeakData.batteryPercent[i] || ''
         ];
         csvContent += row.join(',') + '\n';
     }
@@ -1210,13 +1554,34 @@ function exportToCSV() {
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement('a');
     link.setAttribute('href', encodedUri);
-    link.setAttribute('download', `gridnovo_report_${new Date().toISOString().split('T')[0]}.csv`);
+    link.setAttribute('download', `thingspeak_native_export_${thingSpeakData.channelInfo?.name || 'channel'}_${new Date().toISOString().split('T')[0]}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
     
-    console.log('✅ CSV export completed');
+    console.log('✅ ThingSpeak native format CSV export completed');
 }
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('🔋 GRIDNOVO Dashboard Starting with Native ThingSpeak Integration...');
+    
+    try {
+        // Replace the existing initializeThingSpeak call with the native version
+        initializeThingSpeakWith10MinInterval();
+        initializeTheme();
+        // Override the updateDashboard function
+        window.updateDashboard = updateDashboardWithNativeData;
+        
+        // Override the exportReport function for native format
+        window.exportToCSV = exportThingSpeakNativeCSV;
+        
+        console.log('✅ Native ThingSpeak integration ready');
+        
+    } 
+    
+    catch (error) {
+        console.error('❌ Native integration initialization failed:', error);
+    }
+});
 
 function escapeHtml(text) {
     const div = document.createElement('div');
@@ -1250,6 +1615,14 @@ window.addEventListener('beforeunload', function() {
         console.log('🧹 Cleanup completed');
     }
 });
+window.ThingSpeakNative = {
+    config: THINGSPEAK_CONFIG,
+    data: thingSpeakData,
+    fetchData: fetchThingSpeakData,
+    exportNativeCSV: exportThingSpeakNativeCSV,
+    getDataRange: getDataRange,
+    updateCharts: updateNativeCharts
+};
 
 // =============================================================================
 // LEGACY SUPPORT FUNCTIONS
@@ -1271,6 +1644,7 @@ function toggleInfoBox() {
         }
     }
 }
+
 
 // =============================================================================
 // CONSOLE WELCOME MESSAGE
