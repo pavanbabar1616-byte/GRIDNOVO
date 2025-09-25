@@ -1,0 +1,947 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GRIDNOVO - Renewable Energy Monitoring</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="parent">
+        <div class="div1">
+            <div class="logo-small"><img src="logo.png" class="logo"></div>
+            <nav>
+                <ul>
+                    <li class="active" data-page="home-page"><i class="fas fa-home"></i> <span data-translate="home">Home</span></li>
+                    <li data-page="graphs-page"><i class="fas fa-chart-line"></i> <span data-translate="graphs">Graphs</span></li>
+                    <li data-page="alerts-page"><i class="fas fa-bell"></i> <span data-translate="alerts">Alerts</span></li>
+                    <li data-page="reports-page"><i class="fas fa-file-export"></i> <span data-translate="reports">Reports</span></li>
+                    <li data-page="profile-page"><i class="fas fa-user"></i> <span data-translate="profile">Profile</span></li>
+                    <li data-page="field-page"><i class="fas fa-cog"></i> <span data-translate="fieldSettings">Field Settings</span></li>
+                </ul>
+            </nav>
+        </div>
+        
+        <div class="div2">
+            <div class="header-content">
+                <div class="team-logo"><i class="fas fa-bolt"></i> GRIDNOVO</div>
+                <div class="system-name" data-translate="systemName">Renewable Energy Monitoring System</div>
+                <div class="field-info">Field ID: SOL-4872 (Solar)</div>
+            </div>
+            <div class="controls">
+                <select id="language-select">
+                    <option value="en">English</option>
+                    <option value="hi">हिंदी</option>
+                    <option value="ta">தமிழ்</option>
+                    <option value="bn">বাংলা</option>
+                    <option value="or">ଓଡ଼ିଆ</option>
+                </select>
+                <button class="theme-toggle" onclick="toggleTheme()"><i class="fas fa-moon"></i></button>
+            </div>
+        </div>
+        
+        <div class="div3">
+            <div class="metric-icon"><i class="fas fa-bolt"></i></div>
+            <div class="metric-value" id="energy-consumed">4.2 kWh</div>
+            <div class="metric-label" data-translate="energyConsumed">Energy Consumed</div>
+            <div class="data-time" id="energy-consumed-time" data-translate="lastUpdated">Last updated: --</div>
+        </div>
+        
+        <div class="div4">
+            <div class="metric-icon"><i class="fas fa-solar-panel"></i></div>
+            <div class="metric-value" id="energy-generated">12.8 kWh</div>
+            <div class="metric-label" data-translate="energyGenerated">Energy Generated</div>
+            <div class="data-time" id="energy-generated-time" data-translate="lastUpdated">Last updated: --</div>
+        </div>
+        
+        <div class="div5">
+            <div class="metric-icon"><i class="fas fa-battery-full"></i></div>
+            <div class="metric-value" id="battery-percent">78%</div>
+            <div class="metric-label" data-translate="batteryPercent">Battery Percentage</div>
+            <div class="data-time" id="battery-percent-time" data-translate="lastUpdated">Last updated: --</div>
+        </div>
+        
+        <div class="div6">
+            <div class="metric-icon"><i class="fas fa-bolt"></i></div>
+            <div class="metric-value" id="current">8.2 A</div>
+            <div class="metric-label" data-translate="current">Current</div>
+            <div class="data-time" id="current-time" data-translate="lastUpdated">Last updated: --</div>
+        </div>
+        
+        <div class="div7">
+            <div class="metric-icon"><i class="fas fa-bolt"></i></div>
+            <div class="metric-value" id="voltage">240 V</div>
+            <div class="metric-label" data-translate="voltage">Voltage</div>
+            <div class="data-time" id="voltage-time" data-translate="lastUpdated">Last updated: --</div>
+        </div>
+        
+        <div class="div8">
+            <div class="metric-icon"><i class="fas fa-thermometer-half"></i></div>
+            <div class="metric-value" id="temperature">28°C</div>
+            <div class="metric-label" data-translate="temperature">Temperature</div>
+            <div class="data-time" id="temperature-time" data-translate="lastUpdated">Last updated: --</div>
+        </div>
+        
+        <div class="div9">
+            <div class="hero-image"></div>
+            <div class="hero-text">
+                <p data-translate="heroText1">From sunlight to breeze, watch clean power come alive.</p>
+                <p data-translate="heroText2">Track every watt your panels and turbines create.</p>
+                <p data-translate="heroText3">Turn data into smarter, greener energy decisions.</p>
+            </div>
+        </div>
+        
+        <div class="div10">
+            <div class="weather-day" data-translate="today">Today</div>
+            <div class="weather-icon"><i class="fas fa-sun" id="weather-icon-0"></i></div>
+            <div class="weather-temp" id="weather-temp-0">32°C</div>
+            <div class="weather-details">
+                <div><span data-translate="humidity">Humidity:</span> <span id="weather-humidity-0">65%</span></div>
+                <div><span data-translate="rain">Rain:</span> <span id="weather-rain-0">10%</span></div>
+                <div><span data-translate="windSpeed">Wind:</span> <span id="weather-wind-0">12 km/h</span></div>
+            </div>
+        </div>
+        
+        <div class="div11">
+            <div class="weather-day" data-translate="tomorrow">Tomorrow</div>
+            <div class="weather-icon"><i class="fas fa-cloud-sun" id="weather-icon-1"></i></div>
+            <div class="weather-temp" id="weather-temp-1">30°C</div>
+            <div class="weather-details">
+                <div><span data-translate="humidity">Humidity:</span> <span id="weather-humidity-1">70%</span></div>
+                <div><span data-translate="rain">Rain:</span> <span id="weather-rain-1">30%</span></div>
+                <div><span data-translate="windSpeed">Wind:</span> <span id="weather-wind-1">15 km/h</span></div>
+            </div>
+        </div>
+        
+        <div class="div12">
+            <div class="weather-day" data-translate="dayAfter">Day After</div>
+            <div class="weather-icon"><i class="fas fa-cloud-showers-heavy" id="weather-icon-2"></i></div>
+            <div class="weather-temp" id="weather-temp-2">27°C</div>
+            <div class="weather-details">
+                <div><span data-translate="humidity">Humidity:</span> <span id="weather-humidity-2">85%</span></div>
+                <div><span data-translate="rain">Rain:</span> <span id="weather-rain-2">80%</span></div>
+                <div><span data-translate="windSpeed">Wind:</span> <span id="weather-wind-2">8 km/h</span></div>
+            </div>
+        
+        </div>
+        
+    </div>
+    <!-- System Information Section -->
+        <div class="system-info-section">
+            <h3 data-translate="systemInfo">System Information</h3>
+            <div class="system-info-tabs">
+                <button class="tab-btn active" data-tab="support-tab" data-translate="support">Support</button>
+                <button class="tab-btn" data-tab="chatbot-tab" data-translate="chatbot">Chatbot</button>
+                <button class="tab-btn" data-tab="contact-tab" data-translate="contact">Contact</button>
+            </div>
+            
+            <div class="tab-content active" id="support-tab">
+                <div class="support-grid">
+                    <div class="support-card" onclick="showPage('graphs-page')">
+                        <i class="fas fa-chart-line"></i>
+                        <h4 data-translate="viewGraphs">View Graphs</h4>
+                        <p data-translate="viewGraphsDesc">Check historical data and trends</p>
+                    </div>
+                    <div class="support-card" onclick="showPage('alerts-page')">
+                        <i class="fas fa-bell"></i>
+                        <h4 data-translate="systemAlerts">System Alerts</h4>
+                        <p data-translate="systemAlertsDesc">Monitor system notifications</p>
+                    </div>
+                    <div class="support-card" onclick="showPage('reports-page')">
+                        <i class="fas fa-file-export"></i>
+                        <h4 data-translate="generateReports">Generate Reports</h4>
+                        <p data-translate="generateReportsDesc">Export data for analysis</p>
+                    </div>
+                    <div class="support-card" onclick="showPage('field-page')">
+                        <i class="fas fa-cog"></i>
+                        <h4 data-translate="fieldSettings">Field Settings</h4>
+                        <p data-translate="fieldSettingsDesc">Configure your field parameters</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="tab-content" id="chatbot-tab">
+                <div class="chatbot-container">
+                    <div class="chat-messages" id="chat-messages">
+                        <div class="bot-message">
+                            <i class="fas fa-robot"></i>
+                            <div>
+                                <div data-translate="chatbotWelcome">Hello! I'm your GRIDNOVO assistant. How can I help you today?</div>
+                                <div class="data-time" id="bot-message-time">Just now</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="chat-input-container">
+                        <input type="text" id="chat-input" placeholder="Type your question here..." data-translate="chatPlaceholder">
+                        <button class="send-btn" onclick="sendMessage()" data-translate="send">Send</button>
+                    </div>
+                    <div class="quick-actions">
+                        <button class="quick-btn" onclick="quickQuestion('What is GRIDNOVO?')" data-translate="whatIsGridnovo">What is GRIDNOVO?</button>
+                        <button class="quick-btn" onclick="quickQuestion('How can I check if my field device is connected?')" data-translate="deviceConnection">Device Connection</button>
+                        <button class="quick-btn" onclick="quickQuestion('Where can I see total energy generated today?')" data-translate="energyGeneratedToday">Energy Generated Today</button>
+                        <button class="quick-btn" onclick="quickQuestion('How can I export a report?')" data-translate="exportReport">Export Report</button>
+                        <button class="quick-btn" onclick="quickQuestion('How do I contact support?')" data-translate="contactSupport">Contact Support</button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="tab-content" id="contact-tab">
+                <div class="contact-grid">
+                    <div class="contact-card">
+                        <i class="fas fa-envelope"></i>
+                        <div>
+                            <h4 data-translate="emailSupport">Email Support</h4>
+                            <small>support@gridnovo.com</small>
+                        </div>
+                    </div>
+                    <div class="contact-card">
+                        <i class="fas fa-phone"></i>
+                        <div>
+                            <h4 data-translate="phoneSupport">Phone Support</h4>
+                            <small>(+91)7517031616</small>
+                        </div>
+                    </div>
+                    <div class="contact-card">
+                        <i class="fas fa-clock"></i>
+                        <div>
+                            <h4 data-translate="supportHours">Support Hours</h4>
+                            <small data-translate="supportHoursDetail">24/7 Availability</small>
+                        </div>
+                    </div>
+                    <div class="contact-card">
+                        <i class="fas fa-map-marker-alt"></i>
+                        <div>
+                            <h4 data-translate="headquarters">Headquarters</h4>
+                            <small data-translate="headquartersDetail">pune, India</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    <!-- Navigation Pages -->
+    <div id="graphs-page" class="page-content">
+        <div class="page-header">
+            <h2 data-translate="energyMetrics">Energy Metrics Graphs</h2>
+            <button class="cancel-btn" onclick="showPage('home-page')">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="graphs-grid">
+            <div class="graph-container">
+                <h3 data-translate="temperature">Temperature (15-min intervals)</h3>
+                <div class="chart-wrapper">
+                    <canvas id="temp-chart"></canvas>
+                </div>
+            </div>
+            <div class="graph-container">
+                <h3 data-translate="humidity">Humidity (15-min intervals)</h3>
+                <div class="chart-wrapper">
+                    <canvas id="humidity-chart"></canvas>
+                </div>
+            </div>
+            <div class="graph-container">
+                <h3 data-translate="current">Current (15-min intervals)</h3>
+                <div class="chart-wrapper">
+                    <canvas id="current-chart"></canvas>
+                </div>
+            </div>
+            <div class="graph-container">
+                <h3 data-translate="voltage">Voltage (15-min intervals)</h3>
+                <div class="chart-wrapper">
+                    <canvas id="voltage-chart"></canvas>
+                </div>
+            </div>
+        </div>
+        
+        <!-- System Information Section -->
+        <div class="system-info-section">
+            <h3 data-translate="systemInfo">System Information</h3>
+            <div class="system-info-tabs">
+                <button class="tab-btn active" data-tab="support-tab" data-translate="support">Support</button>
+                <button class="tab-btn" data-tab="chatbot-tab" data-translate="chatbot">Chatbot</button>
+                <button class="tab-btn" data-tab="contact-tab" data-translate="contact">Contact</button>
+            </div>
+            
+            <div class="tab-content active" id="support-tab">
+                <div class="support-grid">
+                    <div class="support-card" onclick="showPage('graphs-page')">
+                        <i class="fas fa-chart-line"></i>
+                        <h4 data-translate="viewGraphs">View Graphs</h4>
+                        <p data-translate="viewGraphsDesc">Check historical data and trends</p>
+                    </div>
+                    <div class="support-card" onclick="showPage('alerts-page')">
+                        <i class="fas fa-bell"></i>
+                        <h4 data-translate="systemAlerts">System Alerts</h4>
+                        <p data-translate="systemAlertsDesc">Monitor system notifications</p>
+                    </div>
+                    <div class="support-card" onclick="showPage('reports-page')">
+                        <i class="fas fa-file-export"></i>
+                        <h4 data-translate="generateReports">Generate Reports</h4>
+                        <p data-translate="generateReportsDesc">Export data for analysis</p>
+                    </div>
+                    <div class="support-card" onclick="showPage('field-page')">
+                        <i class="fas fa-cog"></i>
+                        <h4 data-translate="fieldSettings">Field Settings</h4>
+                        <p data-translate="fieldSettingsDesc">Configure your field parameters</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="tab-content" id="chatbot-tab">
+                <div class="chatbot-container">
+                    <div class="chat-messages" id="chat-messages">
+                        <div class="bot-message">
+                            <i class="fas fa-robot"></i>
+                            <div>
+                                <div data-translate="chatbotWelcome">Hello! I'm your GRIDNOVO assistant. How can I help you today?</div>
+                                <div class="data-time" id="bot-message-time">Just now</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="chat-input-container">
+                        <input type="text" id="chat-input" placeholder="Type your question here..." data-translate="chatPlaceholder">
+                        <button class="send-btn" onclick="sendMessage()" data-translate="send">Send</button>
+                    </div>
+                    <div class="quick-actions">
+                        <button class="quick-btn" onclick="quickQuestion('What is GRIDNOVO?')" data-translate="whatIsGridnovo">What is GRIDNOVO?</button>
+                        <button class="quick-btn" onclick="quickQuestion('How can I check if my field device is connected?')" data-translate="deviceConnection">Device Connection</button>
+                        <button class="quick-btn" onclick="quickQuestion('Where can I see total energy generated today?')" data-translate="energyGeneratedToday">Energy Generated Today</button>
+                        <button class="quick-btn" onclick="quickQuestion('How can I export a report?')" data-translate="exportReport">Export Report</button>
+                        <button class="quick-btn" onclick="quickQuestion('How do I contact support?')" data-translate="contactSupport">Contact Support</button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="tab-content" id="contact-tab">
+                <div class="contact-grid">
+                    <div class="contact-card">
+                        <i class="fas fa-envelope"></i>
+                        <div>
+                            <h4 data-translate="emailSupport">Email Support</h4>
+                            <small>support@gridnovo.com</small>
+                        </div>
+                    </div>
+                    <div class="contact-card">
+                        <i class="fas fa-phone"></i>
+                        <div>
+                            <h4 data-translate="phoneSupport">Phone Support</h4>
+                            <small>(+91)7517031616</small>
+                        </div>
+                    </div>
+                    <div class="contact-card">
+                        <i class="fas fa-clock"></i>
+                        <div>
+                            <h4 data-translate="supportHours">Support Hours</h4>
+                            <small data-translate="supportHoursDetail">24/7 Availability</small>
+                        </div>
+                    </div>
+                    <div class="contact-card">
+                        <i class="fas fa-map-marker-alt"></i>
+                        <div>
+                            <h4 data-translate="headquarters">Headquarters</h4>
+                            <small data-translate="headquartersDetail">pune, India</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="alerts-page" class="page-content">
+        <div class="page-header">
+            <h2 data-translate="systemAlerts">System Alerts</h2>
+            <button class="cancel-btn" onclick="showPage('home-page')">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="content-wrapper">
+            <div class="alerts-container">
+                <div class="alert-summary">
+                    <div class="summary-item">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <div>
+                            <h4 data-translate="activeAlerts">Active Alerts</h4>
+                            <span id="active-alerts-count">0</span>
+                        </div>
+                    </div>
+                    <div class="summary-item">
+                        <i class="fas fa-check-circle"></i>
+                        <div>
+                            <h4 data-translate="systemStatus">System Status</h4>
+                            <span id="system-status" data-translate="normal">Normal</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="alerts-table-container">
+                    <table class="alerts-table">
+                        <thead>
+                            <tr>
+                                <th data-translate="alertType">Alert Type</th>
+                                <th data-translate="message">Message</th>
+                                <th data-translate="timestamp">Timestamp</th>
+                                <th data-translate="status">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="alerts-table-body">
+                            <!-- Alerts will be populated here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        
+        <!-- System Information Section -->
+        <div class="system-info-section">
+            <h3 data-translate="systemInfo">System Information</h3>
+            <div class="system-info-tabs">
+                <button class="tab-btn active" data-tab="support-tab-alerts" data-translate="support">Support</button>
+                <button class="tab-btn" data-tab="chatbot-tab-alerts" data-translate="chatbot">Chatbot</button>
+                <button class="tab-btn" data-tab="contact-tab-alerts" data-translate="contact">Contact</button>
+            </div>
+            
+            <div class="tab-content active" id="support-tab-alerts">
+                <div class="support-grid">
+                    <div class="support-card" onclick="showPage('graphs-page')">
+                        <i class="fas fa-chart-line"></i>
+                        <h4 data-translate="viewGraphs">View Graphs</h4>
+                        <p data-translate="viewGraphsDesc">Check historical data and trends</p>
+                    </div>
+                    <div class="support-card" onclick="showPage('alerts-page')">
+                        <i class="fas fa-bell"></i>
+                        <h4 data-translate="systemAlerts">System Alerts</h4>
+                        <p data-translate="systemAlertsDesc">Monitor system notifications</p>
+                    </div>
+                    <div class="support-card" onclick="showPage('reports-page')">
+                        <i class="fas fa-file-export"></i>
+                        <h4 data-translate="generateReports">Generate Reports</h4>
+                        <p data-translate="generateReportsDesc">Export data for analysis</p>
+                    </div>
+                    <div class="support-card" onclick="showPage('field-page')">
+                        <i class="fas fa-cog"></i>
+                        <h4 data-translate="fieldSettings">Field Settings</h4>
+                        <p data-translate="fieldSettingsDesc">Configure your field parameters</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="tab-content" id="chatbot-tab-alerts">
+                <div class="chatbot-container">
+                    <div class="chat-messages" id="chat-messages-alerts">
+                        <div class="bot-message">
+                            <i class="fas fa-robot"></i>
+                            <div>
+                                <div data-translate="chatbotWelcome">Hello! I'm your GRIDNOVO assistant. How can I help you today?</div>
+                                <div class="data-time">Just now</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="chat-input-container">
+                        <input type="text" id="chat-input-alerts" placeholder="Type your question here..." data-translate="chatPlaceholder">
+                        <button class="send-btn" onclick="sendMessageToPage('alerts')" data-translate="send">Send</button>
+                    </div>
+                    <div class="quick-actions">
+                        <button class="quick-btn" onclick="quickQuestionToPage('What is GRIDNOVO?', 'alerts')" data-translate="whatIsGridnovo">What is GRIDNOVO?</button>
+                        <button class="quick-btn" onclick="quickQuestionToPage('How can I check if my field device is connected?', 'alerts')" data-translate="deviceConnection">Device Connection</button>
+                        <button class="quick-btn" onclick="quickQuestionToPage('Where can I see total energy generated today?', 'alerts')" data-translate="energyGeneratedToday">Energy Generated Today</button>
+                        <button class="quick-btn" onclick="quickQuestionToPage('How can I export a report?', 'alerts')" data-translate="exportReport">Export Report</button>
+                        <button class="quick-btn" onclick="quickQuestionToPage('How do I contact support?', 'alerts')" data-translate="contactSupport">Contact Support</button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="tab-content" id="contact-tab-alerts">
+                <div class="contact-grid">
+                    <div class="contact-card">
+                        <i class="fas fa-envelope"></i>
+                        <div>
+                            <h4 data-translate="emailSupport">Email Support</h4>
+                            <small>support@gridnovo.com</small>
+                        </div>
+                    </div>
+                    <div class="contact-card">
+                        <i class="fas fa-phone"></i>
+                        <div>
+                            <h4 data-translate="phoneSupport">Phone Support</h4>
+                            <small>(+91)7517031616</small>
+                        </div>
+                    </div>
+                    <div class="contact-card">
+                        <i class="fas fa-clock"></i>
+                        <div>
+                            <h4 data-translate="supportHours">Support Hours</h4>
+                            <small data-translate="supportHoursDetail">24/7 Availability</small>
+                        </div>
+                    </div>
+                    <div class="contact-card">
+                        <i class="fas fa-map-marker-alt"></i>
+                        <div>
+                            <h4 data-translate="headquarters">Headquarters</h4>
+                            <small data-translate="headquartersDetail">pune, India</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="reports-page" class="page-content">
+        <div class="page-header">
+            <h2 data-translate="energyReports">Energy Reports</h2>
+            <button class="cancel-btn" onclick="showPage('home-page')">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="content-wrapper">
+            <div class="reports-container">
+                <div class="report-config">
+                    <div class="config-section">
+                        <h3 data-translate="dateRange">Date Range</h3>
+                        <div class="date-inputs">
+                            <div class="input-group">
+                                <label for="start-date" data-translate="startDate">Start Date</label>
+                                <input type="date" id="start-date">
+                            </div>
+                            <div class="input-group">
+                                <label for="end-date" data-translate="endDate">End Date</label>
+                                <input type="date" id="end-date">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="config-section">
+                        <h3 data-translate="parameters">Parameters</h3>
+                        <div class="parameter-grid">
+                            <label class="checkbox-label">
+                                <input type="checkbox" name="parameter" value="temperature" checked>
+                                <span data-translate="temperature">Temperature</span>
+                            </label>
+                            <label class="checkbox-label">
+                                <input type="checkbox" name="parameter" value="humidity" checked>
+                                <span data-translate="humidity">Humidity</span>
+                            </label>
+                            <label class="checkbox-label">
+                                <input type="checkbox" name="parameter" value="current" checked>
+                                <span data-translate="current">Current</span>
+                            </label>
+                            <label class="checkbox-label">
+                                <input type="checkbox" name="parameter" value="voltage" checked>
+                                <span data-translate="voltage">Voltage</span>
+                            </label>
+                            <label class="checkbox-label">
+                                <input type="checkbox" name="parameter" value="energy-generated" checked>
+                                <span data-translate="energyGenerated">Energy Generated</span>
+                            </label>
+                            <label class="checkbox-label">
+                                <input type="checkbox" name="parameter" value="energy-consumed" checked>
+                                <span data-translate="energyConsumed">Energy Consumed</span>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="export-actions">
+                        <button class="export-btn excel-btn" onclick="exportReport('excel')">
+                            <i class="fas fa-file-excel"></i>
+                            <span data-translate="exportExcel">Export to Excel</span>
+                        </button>
+                        <button class="export-btn pdf-btn" onclick="exportReport('pdf')">
+                            <i class="fas fa-file-pdf"></i>
+                            <span data-translate="exportPDF">Export to PDF</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- System Information Section -->
+        <div class="system-info-section">
+            <h3 data-translate="systemInfo">System Information</h3>
+            <div class="system-info-tabs">
+                <button class="tab-btn active" data-tab="support-tab-reports" data-translate="support">Support</button>
+                <button class="tab-btn" data-tab="chatbot-tab-reports" data-translate="chatbot">Chatbot</button>
+                <button class="tab-btn" data-tab="contact-tab-reports" data-translate="contact">Contact</button>
+            </div>
+            
+            <div class="tab-content active" id="support-tab-reports">
+                <div class="support-grid">
+                    <div class="support-card" onclick="showPage('graphs-page')">
+                        <i class="fas fa-chart-line"></i>
+                        <h4 data-translate="viewGraphs">View Graphs</h4>
+                        <p data-translate="viewGraphsDesc">Check historical data and trends</p>
+                    </div>
+                    <div class="support-card" onclick="showPage('alerts-page')">
+                        <i class="fas fa-bell"></i>
+                        <h4 data-translate="systemAlerts">System Alerts</h4>
+                        <p data-translate="systemAlertsDesc">Monitor system notifications</p>
+                    </div>
+                    <div class="support-card" onclick="showPage('reports-page')">
+                        <i class="fas fa-file-export"></i>
+                        <h4 data-translate="generateReports">Generate Reports</h4>
+                        <p data-translate="generateReportsDesc">Export data for analysis</p>
+                    </div>
+                    <div class="support-card" onclick="showPage('field-page')">
+                        <i class="fas fa-cog"></i>
+                        <h4 data-translate="fieldSettings">Field Settings</h4>
+                        <p data-translate="fieldSettingsDesc">Configure your field parameters</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="tab-content" id="chatbot-tab-reports">
+                <div class="chatbot-container">
+                    <div class="chat-messages" id="chat-messages-reports">
+                        <div class="bot-message">
+                            <i class="fas fa-robot"></i>
+                            <div>
+                                <div data-translate="chatbotWelcome">Hello! I'm your GRIDNOVO assistant. How can I help you today?</div>
+                                <div class="data-time">Just now</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="chat-input-container">
+                        <input type="text" id="chat-input-reports" placeholder="Type your question here..." data-translate="chatPlaceholder">
+                        <button class="send-btn" onclick="sendMessageToPage('reports')" data-translate="send">Send</button>
+                    </div>
+                    <div class="quick-actions">
+                        <button class="quick-btn" onclick="quickQuestionToPage('What is GRIDNOVO?', 'reports')" data-translate="whatIsGridnovo">What is GRIDNOVO?</button>
+                        <button class="quick-btn" onclick="quickQuestionToPage('How can I check if my field device is connected?', 'reports')" data-translate="deviceConnection">Device Connection</button>
+                        <button class="quick-btn" onclick="quickQuestionToPage('Where can I see total energy generated today?', 'reports')" data-translate="energyGeneratedToday">Energy Generated Today</button>
+                        <button class="quick-btn" onclick="quickQuestionToPage('How can I export a report?', 'reports')" data-translate="exportReport">Export Report</button>
+                        <button class="quick-btn" onclick="quickQuestionToPage('How do I contact support?', 'reports')" data-translate="contactSupport">Contact Support</button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="tab-content" id="contact-tab-reports">
+                <div class="contact-grid">
+                    <div class="contact-card">
+                        <i class="fas fa-envelope"></i>
+                        <div>
+                            <h4 data-translate="emailSupport">Email Support</h4>
+                            <small>support@gridnovo.com</small>
+                        </div>
+                    </div>
+                    <div class="contact-card">
+                        <i class="fas fa-phone"></i>
+                        <div>
+                            <h4 data-translate="phoneSupport">Phone Support</h4>
+                            <small>(+91)7517031616</small>
+                        </div>
+                    </div>
+                    <div class="contact-card">
+                        <i class="fas fa-clock"></i>
+                        <div>
+                            <h4 data-translate="supportHours">Support Hours</h4>
+                            <small data-translate="supportHoursDetail">24/7 Availability</small>
+                        </div>
+                    </div>
+                    <div class="contact-card">
+                        <i class="fas fa-map-marker-alt"></i>
+                        <div>
+                            <h4 data-translate="headquarters">Headquarters</h4>
+                            <small data-translate="headquartersDetail">pune, India</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="profile-page" class="page-content">
+        <div class="page-header">
+            <h2 data-translate="userProfile">User Profile</h2>
+            <button class="cancel-btn" onclick="showPage('home-page')">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="content-wrapper">
+            <div class="profile-container">
+                <div class="profile-section">
+                    <div class="auth-section">
+                        <h3 data-translate="authentication">Authentication</h3>
+                        <div class="auth-form">
+                            <div class="input-group">
+                                <label for="username" data-translate="username">Username</label>
+                                <input type="text" id="username" value="admin">
+                            </div>
+                            <div class="input-group">
+                                <label for="password" data-translate="password">Password</label>
+                                <input type="password" id="password" value="••••••••">
+                            </div>
+                            <button class="auth-btn primary" data-translate="updateCredentials">Update Credentials</button>
+                        </div>
+                        <h3 data-translate="notificationPreferences">Notification Preferences</h3>
+                        <div class="notification-preferences">
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="email-alerts" checked>
+                                <span data-translate="emailAlerts">Email Alerts</span>
+                            </label>
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="sms-alerts">
+                                <span data-translate="smsAlerts">SMS Alerts</span>
+                            </label>
+                            <button class="auth-btn secondary" data-translate="savePreferences">Save Preferences</button>
+                        </div>
+                    </div>
+                    <div class="management-section">
+                        <h3 data-translate="fieldManagement">Field Management</h3>
+                        <div class="management-buttons">
+                            <button class="management-btn" data-translate="addNewField">Add New Field</button>
+                            <button class="management-btn" data-translate="editField">Edit Field</button>
+                            <button class="management-btn" data-translate="deleteField">Delete Field</button>
+                        </div>
+                        <h3 data-translate="contactSupport">Contact Support</h3>
+                        <div class="contact-info">
+                            <p><i class="fas fa-envelope"></i> support@gridnovo.com</p>
+                            <p><i class="fas fa-phone"></i>(+91)7517031616</p>
+                            <p><i class="fas fa-clock"></i> <span data-translate="supportHours">24/7 Support Available</span></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- System Information Section -->
+        <div class="system-info-section">
+            <h3 data-translate="systemInfo">System Information</h3>
+            <div class="system-info-tabs">
+                <button class="tab-btn active" data-tab="support-tab-profile" data-translate="support">Support</button>
+                <button class="tab-btn" data-tab="chatbot-tab-profile" data-translate="chatbot">Chatbot</button>
+                <button class="tab-btn" data-tab="contact-tab-profile" data-translate="contact">Contact</button>
+            </div>
+            
+            <div class="tab-content active" id="support-tab-profile">
+                <div class="support-grid">
+                    <div class="support-card" onclick="showPage('graphs-page')">
+                        <i class="fas fa-chart-line"></i>
+                        <h4 data-translate="viewGraphs">View Graphs</h4>
+                        <p data-translate="viewGraphsDesc">Check historical data and trends</p>
+                    </div>
+                    <div class="support-card" onclick="showPage('alerts-page')">
+                        <i class="fas fa-bell"></i>
+                        <h4 data-translate="systemAlerts">System Alerts</h4>
+                        <p data-translate="systemAlertsDesc">Monitor system notifications</p>
+                    </div>
+                    <div class="support-card" onclick="showPage('reports-page')">
+                        <i class="fas fa-file-export"></i>
+                        <h4 data-translate="generateReports">Generate Reports</h4>
+                        <p data-translate="generateReportsDesc">Export data for analysis</p>
+                    </div>
+                    <div class="support-card" onclick="showPage('field-page')">
+                        <i class="fas fa-cog"></i>
+                        <h4 data-translate="fieldSettings">Field Settings</h4>
+                        <p data-translate="fieldSettingsDesc">Configure your field parameters</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="tab-content" id="chatbot-tab-profile">
+                <div class="chatbot-container">
+                    <div class="chat-messages" id="chat-messages-profile">
+                        <div class="bot-message">
+                            <i class="fas fa-robot"></i>
+                            <div>
+                                <div data-translate="chatbotWelcome">Hello! I'm your GRIDNOVO assistant. How can I help you today?</div>
+                                <div class="data-time">Just now</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="chat-input-container">
+                        <input type="text" id="chat-input-profile" placeholder="Type your question here..." data-translate="chatPlaceholder">
+                        <button class="send-btn" onclick="sendMessageToPage('profile')" data-translate="send">Send</button>
+                    </div>
+                    <div class="quick-actions">
+                        <button class="quick-btn" onclick="quickQuestionToPage('What is GRIDNOVO?', 'profile')" data-translate="whatIsGridnovo">What is GRIDNOVO?</button>
+                        <button class="quick-btn" onclick="quickQuestionToPage('How can I check if my field device is connected?', 'profile')" data-translate="deviceConnection">Device Connection</button>
+                        <button class="quick-btn" onclick="quickQuestionToPage('Where can I see total energy generated today?', 'profile')" data-translate="energyGeneratedToday">Energy Generated Today</button>
+                        <button class="quick-btn" onclick="quickQuestionToPage('How can I export a report?', 'profile')" data-translate="exportReport">Export Report</button>
+                        <button class="quick-btn" onclick="quickQuestionToPage('How do I contact support?', 'profile')" data-translate="contactSupport">Contact Support</button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="tab-content" id="contact-tab-profile">
+                <div class="contact-grid">
+                    <div class="contact-card">
+                        <i class="fas fa-envelope"></i>
+                        <div>
+                            <h4 data-translate="emailSupport">Email Support</h4>
+                            <small>support@gridnovo.com</small>
+                        </div>
+                    </div>
+                    <div class="contact-card">
+                        <i class="fas fa-phone"></i>
+                        <div>
+                            <h4 data-translate="phoneSupport">Phone Support</h4>
+                            <small>(+91)7517031616</small>
+                        </div>
+                    </div>
+                    <div class="contact-card">
+                        <i class="fas fa-clock"></i>
+                        <div>
+                            <h4 data-translate="supportHours">Support Hours</h4>
+                            <small data-translate="supportHoursDetail">24/7 Availability</small>
+                        </div>
+                    </div>
+                    <div class="contact-card">
+                        <i class="fas fa-map-marker-alt"></i>
+                        <div>
+                            <h4 data-translate="headquarters">Headquarters</h4>
+                            <small data-translate="headquartersDetail">pune, India</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="field-page" class="page-content">
+        <div class="page-header">
+            <h2 data-translate="fieldSettings">Field Settings</h2>
+            <button class="cancel-btn" onclick="showPage('home-page')">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="content-wrapper">
+            <div class="field-container">
+                <div class="field-config-section">
+                    <h3 data-translate="fieldConfiguration">Field Configuration</h3>
+                    <form class="field-form">
+                        <div class="form-row">
+                            <div class="input-group">
+                                <label for="field-type" data-translate="fieldType">Field Type</label>
+                                <select id="field-type">
+                                    <option value="solar">Solar</option>
+                                    <option value="wind">Wind</option>
+                                    <option value="hydro">Hydro</option>
+                                    <option value="geothermal">Geothermal</option>
+                                </select>
+                            </div>
+                            <div class="input-group">
+                                <label for="field-name" data-translate="fieldName">Field Name</label>
+                                <input type="text" id="field-name" value="SOL-4872">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="input-group">
+                                <label for="field-location" data-translate="location">Location</label>
+                                <input type="text" id="field-location" value="Chennai, Tamil Nadu">
+                            </div>
+                            <div class="input-group">
+                                <label for="field-capacity" data-translate="capacity">Capacity (kW)</label>
+                                <input type="number" id="field-capacity" value="50">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="input-group">
+                                <label for="threshold-temp" data-translate="tempThreshold">Temperature Threshold (°C)</label>
+                                <input type="number" id="threshold-temp" value="40">
+                            </div>
+                            <div class="input-group">
+                                <label for="threshold-voltage" data-translate="voltageThreshold">Voltage Threshold (V)</label>
+                                <input type="number" id="threshold-voltage" value="250">
+                            </div>
+                        </div>
+                        <button type="button" class="save-btn" data-translate="saveSettings">Save Settings</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <!-- System Information Section -->
+        <div class="system-info-section">
+            <h3 data-translate="systemInfo">System Information</h3>
+            <div class="system-info-tabs">
+                <button class="tab-btn active" data-tab="support-tab-field" data-translate="support">Support</button>
+                <button class="tab-btn" data-tab="chatbot-tab-field" data-translate="chatbot">Chatbot</button>
+                <button class="tab-btn" data-tab="contact-tab-field" data-translate="contact">Contact</button>
+            </div>
+            
+            <div class="tab-content active" id="support-tab-field">
+                <div class="support-grid">
+                    <div class="support-card" onclick="showPage('graphs-page')">
+                        <i class="fas fa-chart-line"></i>
+                        <h4 data-translate="viewGraphs">View Graphs</h4>
+                        <p data-translate="viewGraphsDesc">Check historical data and trends</p>
+                    </div>
+                    <div class="support-card" onclick="showPage('alerts-page')">
+                        <i class="fas fa-bell"></i>
+                        <h4 data-translate="systemAlerts">System Alerts</h4>
+                        <p data-translate="systemAlertsDesc">Monitor system notifications</p>
+                    </div>
+                    <div class="support-card" onclick="showPage('reports-page')">
+                        <i class="fas fa-file-export"></i>
+                        <h4 data-translate="generateReports">Generate Reports</h4>
+                        <p data-translate="generateReportsDesc">Export data for analysis</p>
+                    </div>
+                    <div class="support-card" onclick="showPage('field-page')">
+                        <i class="fas fa-cog"></i>
+                        <h4 data-translate="fieldSettings">Field Settings</h4>
+                        <p data-translate="fieldSettingsDesc">Configure your field parameters</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="tab-content" id="chatbot-tab-field">
+                <div class="chatbot-container">
+                    <div class="chat-messages" id="chat-messages-field">
+                        <div class="bot-message">
+                            <i class="fas fa-robot"></i>
+                            <div>
+                                <div data-translate="chatbotWelcome">Hello! I'm your GRIDNOVO assistant. How can I help you today?</div>
+                                <div class="data-time">Just now</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="chat-input-container">
+                        <input type="text" id="chat-input-field" placeholder="Type your question here..." data-translate="chatPlaceholder">
+                        <button class="send-btn" onclick="sendMessageToPage('field')" data-translate="send">Send</button>
+                    </div>
+                    <div class="quick-actions">
+                        <button class="quick-btn" onclick="quickQuestionToPage('What is GRIDNOVO?', 'field')" data-translate="whatIsGridnovo">What is GRIDNOVO?</button>
+                        <button class="quick-btn" onclick="quickQuestionToPage('How can I check if my field device is connected?', 'field')" data-translate="deviceConnection">Device Connection</button>
+                        <button class="quick-btn" onclick="quickQuestionToPage('Where can I see total energy generated today?', 'field')" data-translate="energyGeneratedToday">Energy Generated Today</button>
+                        <button class="quick-btn" onclick="quickQuestionToPage('How can I export a report?', 'field')" data-translate="exportReport">Export Report</button>
+                        <button class="quick-btn" onclick="quickQuestionToPage('How do I contact support?', 'field')" data-translate="contactSupport">Contact Support</button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="tab-content" id="contact-tab-field">
+                <div class="contact-grid">
+                    <div class="contact-card">
+                        <i class="fas fa-envelope"></i>
+                        <div>
+                            <h4 data-translate="emailSupport">Email Support</h4>
+                            <small>support@gridnovo.com</small>
+                        </div>
+                    </div>
+                    <div class="contact-card">
+                        <i class="fas fa-phone"></i>
+                        <div>
+                            <h4 data-translate="phoneSupport">Phone Support</h4>
+                            <small>(+91)7517031616</small>
+                        </div>
+                    </div>
+                    <div class="contact-card">
+                        <i class="fas fa-clock"></i>
+                        <div>
+                            <h4 data-translate="supportHours">Support Hours</h4>
+                            <small data-translate="supportHoursDetail">24/7 Availability</small>
+                        </div>
+                    </div>
+                    <div class="contact-card">
+                        <i class="fas fa-map-marker-alt"></i>
+                        <div>
+                            <h4 data-translate="headquarters">Headquarters</h4>
+                            <small data-translate="headquartersDetail">pune, India</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/js/all.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
